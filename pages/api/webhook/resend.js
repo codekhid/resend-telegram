@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { sendTelegramMessage, sendTelegramDocument, formatEmailMessage } from "../../../lib/telegram";
+import { sendTelegramMessage, sendTelegramDocument, sendTelegramNotification, formatEmailMessage } from "../../../lib/telegram";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -52,15 +52,28 @@ export default async function handler(req, res) {
     // list, but no body. Full HTML/text content needs this extra fetch.
     const { data: email } = await resend.emails.receiving.get(event.data.email_id);
 
-    await sendTelegramMessage(
-      formatEmailMessage({
-        from: email.from,
-        to: email.to,
+    if (process.env.APP_URL) {
+      // Short notification + a button linking to /email/[id], which fetches
+      // and renders the full email fresh on each open — no database, no
+      // giant wall of text dumped into the channel.
+      await sendTelegramNotification({
         subject: email.subject,
-        text: email.text,
-        html: email.html,
-      })
-    );
+        from: email.from,
+        url: `${process.env.APP_URL}/email/${event.data.email_id}`,
+      });
+    } else {
+      // Fallback for anyone who hasn't set APP_URL yet — keeps the bot
+      // working (just less tidy) instead of failing outright.
+      await sendTelegramMessage(
+        formatEmailMessage({
+          from: email.from,
+          to: email.to,
+          subject: email.subject,
+          text: email.text,
+          html: email.html,
+        })
+      );
+    }
 
     // Forward attachments too, if any. Each one needs its own download —
     // Resend only gives you metadata + a download_url per attachment.
