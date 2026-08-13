@@ -11,10 +11,17 @@ endpoint the instant an email arrives.
    `/api/webhook/resend` with metadata (from/to/subject/attachment list —
    not the body)
 3. The webhook handler verifies the request really came from Resend
-   (signature check), fetches the full body via Resend's API, and posts it
-   to your Telegram channel
-4. Any attachments get downloaded and forwarded as separate Telegram
-   documents
+   (signature check), fetches the full body via Resend's API, and posts a
+   short notification to Telegram: subject + sender + a **"View email"**
+   button
+4. Tapping the button opens `/email/[id]` on your own site — it fetches
+   that specific email fresh from Resend and renders it responsively
+   (works well on mobile, since that's where you'll be tapping it from)
+5. Any attachments still get downloaded and forwarded as separate Telegram
+   documents, same as before
+
+No database is used anywhere — Resend keeps received emails accessible by
+ID, so `/email/[id]` just asks for that one email each time it's opened.
 
 ## Setup
 
