@@ -59,6 +59,7 @@ export default async function handler(req, res) {
       await sendTelegramNotification({
         subject: email.subject,
         from: email.from,
+        to: email.to,
         url: `${process.env.APP_URL}/email/${event.data.email_id}`,
       });
     } else {
