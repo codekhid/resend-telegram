@@ -23,6 +23,19 @@ export async function getServerSideProps({ params }) {
   }
 }
 
+function relativeTime(dateStr) {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const diffSec = Math.round(diffMs / 1000);
+  if (diffSec < 60) return "just now";
+  const diffMin = Math.round(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} minute${diffMin === 1 ? "" : "s"} ago`;
+  const diffHr = Math.round(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} hour${diffHr === 1 ? "" : "s"} ago`;
+  const diffDay = Math.round(diffHr / 24);
+  if (diffDay < 7) return `${diffDay} day${diffDay === 1 ? "" : "s"} ago`;
+  return null; // beyond a week, just show the absolute date instead
+}
+
 export default function EmailView({ subject, from, to, html, text, createdAt }) {
   return (
     <>
@@ -39,7 +52,9 @@ export default function EmailView({ subject, from, to, html, text, createdAt }) 
             </div>
             {createdAt && (
               <div>
-                <span className="label">Received</span> {new Date(createdAt).toLocaleString()}
+                <span className="label">Received</span>{" "}
+                {relativeTime(createdAt) ? `${relativeTime(createdAt)} · ` : ""}
+                {new Date(createdAt).toLocaleString()}
               </div>
             )}
           </div>
@@ -112,6 +127,7 @@ export default function EmailView({ subject, from, to, html, text, createdAt }) 
           font-family: "SF Mono", Consolas, monospace;
           font-size: 12px;
           word-break: break-all;
+          color: #e8e8ea;
         }
         .body {
           font-size: 15px;
